@@ -52,8 +52,7 @@ Run it from your IDE (like Eclipse or IntelliJ) or use Maven:
 ```
 
 
-The server will start on `http://localhost:8080`.
+The server will start on `http://localhost:8080
 
-
-Contributor: Aditya Barakoti
+Team member : Shivani
 ---
