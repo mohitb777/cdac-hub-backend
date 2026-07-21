@@ -1,4 +1,6 @@
 
+> **🖥️ Frontend Companion:** This repository only contains the backend API. You can find the React-based frontend user interface code here: [CDAC Hub - Frontend](https://github.com/mohitb777/cdac-hub-frontend)
+
 # CDAC Hub - Backend 
 
 This is the backend API for the CDAC Student Project Repository platform. It handles all the heavy lifting: user authentication, role-based access control (Student, Reviewer, Admin), file uploads, and the review workflow logic. 
@@ -52,8 +54,7 @@ Run it from your IDE (like Eclipse or IntelliJ) or use Maven:
 ```
 
 
-The server will start on `http://localhost:8080`.
+The server will start on `http://localhost:8080
 
-
-
+Team member : Shivani
 ---
