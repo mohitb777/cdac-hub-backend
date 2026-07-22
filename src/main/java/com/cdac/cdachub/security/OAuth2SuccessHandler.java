@@ -9,6 +9,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+
 import java.io.IOException;
 
 @Component
@@ -20,8 +21,8 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request,
-            HttpServletResponse response,
-            Authentication authentication) throws IOException {
+                                        HttpServletResponse response,
+                                        Authentication authentication) throws IOException {
 
         OAuth2User oAuth2User = (OAuth2User) authentication.getPrincipal();
 
@@ -32,20 +33,29 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         // Save user if first time login
         User user = userRepository.findByEmail(email).orElseGet(() -> {
-            User newUser = User.builder()
-                    .email(email)
-                    .name(name)
-                    .googleId(googleId)
-                    .avatarUrl(avatar)
-                    .role(User.Role.STUDENT)
-                    .build();
+
+            // Count existing users
+            long userCount = userRepository.count();
+
+            User newUser = new User();
+            newUser.setEmail(email);
+            newUser.setName(name);
+            newUser.setGoogleId(googleId);
+            newUser.setAvatarUrl(avatar);
+
+            // First registered user becomes ADMIN, rest become STUDENT
+            newUser.setRole(userCount == 0 ? User.Role.ADMIN : User.Role.STUDENT);
+
             return userRepository.save(newUser);
         });
 
         // Generate JWT
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        String token = jwtUtil.generateToken(
+                user.getEmail(),
+                user.getRole().name()
+        );
 
-        // Redirect to frontend with token
+        // Redirect to frontend with JWT
         response.sendRedirect("http://localhost:5173/auth/callback?token=" + token);
     }
 }
