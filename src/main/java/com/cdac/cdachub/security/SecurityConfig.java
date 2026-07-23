@@ -55,6 +55,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 // ✅ Allow OPTIONS preflight requests from browser
+            	.requestMatchers("/error").permitAll()  
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/oauth2/**", "/login/**").permitAll()

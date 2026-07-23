@@ -23,6 +23,7 @@ public class ProjectService {
     public Project submitProject(String title, String description,
             String techStack, String category,
             Double price, String userEmail,
+            Integer year, String month,
             List<MultipartFile> files) throws IOException {
 
         User user = userRepository.findByEmail(userEmail)
@@ -37,7 +38,10 @@ public class ProjectService {
                 .price(price)
                 .status(Project.Status.PENDING)
                 .user(user)
+                .year(year)    // Make sure this is here!
+                .month(month)
                 .build();
+        	
 
         Project saved = projectRepository.save(project);
 
@@ -69,6 +73,10 @@ public class ProjectService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return projectRepository.findByUserId(user.getId());
+    }
+    
+    public List<Project> getApprovedByYear(Integer year) {
+        return projectRepository.findByStatusAndYear("APPROVED", year);
     }
 
     public Project updateStatus(Long projectId, Project.Status status) {

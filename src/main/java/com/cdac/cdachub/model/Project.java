@@ -30,6 +30,11 @@ public class Project {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Column(nullable = false)
+    private Integer year;      // e.g. 2026
+
+    @Column(nullable = false)
+    private String month;  
     // ✅ FIX: When serializing user inside project,
     // don't include password and googleId
     @ManyToOne

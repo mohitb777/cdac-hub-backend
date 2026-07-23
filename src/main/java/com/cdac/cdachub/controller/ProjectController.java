@@ -7,7 +7,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
+import java.util.Map; // ✅ FIX 1: Added Map import
 
 @RestController
 @RequestMapping("/api")
@@ -22,24 +24,38 @@ public class ProjectController {
     public ResponseEntity<List<Project>> getApproved() {
         return ResponseEntity.ok(projectService.getApprovedProjects());
     }
-
+    
+    @GetMapping("/public/projects/year/{year}")
+    public ResponseEntity<List<Project>> getByYear(@PathVariable Integer year) {
+        return ResponseEntity.ok(projectService.getApprovedByYear(year));
+    }
+    
     // STUDENT — submit project (needs JWT)
     @PostMapping("/student/projects")
-    public ResponseEntity<Project> submit(
+    public ResponseEntity<?> submit(
             @RequestParam String title,
             @RequestParam String description,
             @RequestParam String techStack,
             @RequestParam String category,
             @RequestParam Double price,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) String month,
             @RequestParam List<MultipartFile> files) throws Exception {
 
-        // Get email from JWT token (via AuthUtil)
+        // ✅ Validate before hitting the DB — clean error instead of a raw SQL crash
+        if (month == null || month.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Month is required"));
+        }
+        if (year == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Year is required"));
+        }
+
         String email = AuthUtil.getCurrentUserEmail();
 
+        // ✅ FIX 2: Corrected the parameter order to match the service (email comes before year/month)
         Project p = projectService.submitProject(
-            title, description, techStack,
-            category, price, email, files);
-
+        	    title, description, techStack, category, price, email, year, month, files
+        	);
         return ResponseEntity.ok(p);
     }
 
