@@ -61,6 +61,11 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("project")
     private List<TeamMember> teamMembers;
+    
+ // ✅ NEW — deleting a project now also deletes its review history
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("project")
+    private List<Review> reviews;
 
     private LocalDateTime createdAt;
 
