@@ -7,7 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.cdac.cdachub.dto.TeamMemberDTO;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map; // ✅ FIX 1: Added Map import
 
@@ -37,25 +40,45 @@ public class ProjectController {
             @RequestParam String description,
             @RequestParam String techStack,
             @RequestParam String category,
-            @RequestParam Double price,
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) String month,
+            @RequestParam String gitLink,
+            @RequestParam Integer year,
+            @RequestParam String month,
+            @RequestParam String submitterName,
+            @RequestParam String submitterEmail,
+            @RequestParam String submitterRollNo,
+            @RequestParam String guideName,
+            @RequestParam String guideEmail,
+            @RequestParam(required = false) String teamMembers,
             @RequestParam List<MultipartFile> files) throws Exception {
 
-        // ✅ Validate before hitting the DB — clean error instead of a raw SQL crash
-        if (month == null || month.isBlank()) {
+        if (gitLink == null || gitLink.isBlank())
+            return ResponseEntity.badRequest().body(Map.of("error", "Git link is required"));
+        if (month == null || month.isBlank())
             return ResponseEntity.badRequest().body(Map.of("error", "Month is required"));
-        }
-        if (year == null) {
+        if (year == null)
             return ResponseEntity.badRequest().body(Map.of("error", "Year is required"));
+        if (submitterRollNo == null || submitterRollNo.isBlank())
+            return ResponseEntity.badRequest().body(Map.of("error", "Your roll number is required"));
+        if (guideName == null || guideName.isBlank() || guideEmail == null || guideEmail.isBlank())
+            return ResponseEntity.badRequest().body(Map.of("error", "Guide name and email are required"));
+
+        // Team members are sent as a JSON string inside the FormData — parse it here
+        List<TeamMemberDTO> teamList = new ArrayList<>();
+        if (teamMembers != null && !teamMembers.isBlank()) {
+            ObjectMapper mapper = new ObjectMapper();
+            teamList = mapper.readValue(teamMembers, new TypeReference<List<TeamMemberDTO>>() {});
+            if (teamList.size() > 12)
+                return ResponseEntity.badRequest().body(Map.of("error", "Maximum 12 team members allowed"));
         }
 
         String email = AuthUtil.getCurrentUserEmail();
 
-        // ✅ FIX 2: Corrected the parameter order to match the service (email comes before year/month)
         Project p = projectService.submitProject(
-        	    title, description, techStack, category, price, email, year, month, files
-        	);
+            title, description, techStack, category, gitLink, year, month,
+            submitterName, submitterEmail, submitterRollNo,
+            guideName, guideEmail, teamList,
+            email, files);
+
         return ResponseEntity.ok(p);
     }
 

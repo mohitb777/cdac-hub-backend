@@ -25,28 +25,42 @@ public class Project {
 
     private String techStack;
     private String category;
-    private Double price;
+
+    // ✅ Replaces "price"
+    @Column(nullable = false)
+    private String gitLink;
+
+    @Column(nullable = false)
+    private Integer year;
+
+    @Column(nullable = false)
+    private String month;
+
+    // ✅ NEW — captured fresh at submission time
+    private String submitterName;
+    private String submitterEmail;
+    private String submitterRollNo;
+
+    // ✅ NEW — guide details
+    private String guideName;
+    private String guideEmail;
 
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @Column(nullable = false)
-    private Integer year;      // e.g. 2026
-
-    @Column(nullable = false)
-    private String month;  
-    // ✅ FIX: When serializing user inside project,
-    // don't include password and googleId
     @ManyToOne
     @JoinColumn(name = "user_id")
     @JsonIgnoreProperties({"password", "googleId"})
     private User user;
 
-    // ✅ FIX: When serializing files inside project,
-    // don't re-serialize the "project" field inside each file
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("project")
     private List<ProjectFile> files;
+
+    // ✅ NEW — 0 to 12 team members
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("project")
+    private List<TeamMember> teamMembers;
 
     private LocalDateTime createdAt;
 

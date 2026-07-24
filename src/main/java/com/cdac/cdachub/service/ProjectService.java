@@ -1,14 +1,27 @@
 package com.cdac.cdachub.service;
 
-import com.cdac.cdachub.model.*;
-import com.cdac.cdachub.repository.*;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.UUID;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cdac.cdachub.dto.TeamMemberDTO;
+import com.cdac.cdachub.model.Project;
+import com.cdac.cdachub.model.ProjectFile;
+import com.cdac.cdachub.model.TeamMember;
+import com.cdac.cdachub.model.User;
+import com.cdac.cdachub.repository.ProjectFileRepository;
+import com.cdac.cdachub.repository.ProjectRepository;
+import com.cdac.cdachub.repository.TeamMemberRepository;
+import com.cdac.cdachub.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -17,41 +30,59 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectFileRepository projectFileRepository;
     private final UserRepository userRepository;
+    private final TeamMemberRepository teamMemberRepository;
 
     private final String UPLOAD_DIR = "uploads/";
 
     public Project submitProject(String title, String description,
-            String techStack, String category,
-            Double price, String userEmail,
+            String techStack, String category, String gitLink,
             Integer year, String month,
-            List<MultipartFile> files) throws IOException {
+            String submitterName, String submitterEmail, String submitterRollNo,
+            String guideName, String guideEmail,
+            List<TeamMemberDTO> teamMemberDtos,
+            String userEmail, List<MultipartFile> files) throws IOException {
 
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // Save project
         Project project = Project.builder()
                 .title(title)
                 .description(description)
                 .techStack(techStack)
                 .category(category)
-                .price(price)
+                .gitLink(gitLink)
+                .year(year)
+                .month(month)
+                .submitterName(submitterName)
+                .submitterEmail(submitterEmail)
+                .submitterRollNo(submitterRollNo)
+                .guideName(guideName)
+                .guideEmail(guideEmail)
                 .status(Project.Status.PENDING)
                 .user(user)
-                .year(year)    // Make sure this is here!
-                .month(month)
                 .build();
-        	
 
         Project saved = projectRepository.save(project);
 
-        // Save files
+        // Save team members, if any
+        if (teamMemberDtos != null) {
+            for (TeamMemberDTO dto : teamMemberDtos) {
+                TeamMember tm = TeamMember.builder()
+                        .name(dto.getName())
+                        .rollNo(dto.getRollNo())
+                        .email(dto.getEmail())
+                        .project(saved)
+                        .build();
+                teamMemberRepository.save(tm);
+            }
+        }
+
+        // Save files (unchanged from before)
         Files.createDirectories(Paths.get(UPLOAD_DIR));
         for (MultipartFile file : files) {
             String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
             Path path = Paths.get(UPLOAD_DIR + fileName);
-            Files.copy(file.getInputStream(), path,
-                StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
 
             ProjectFile pf = ProjectFile.builder()
                     .fileName(file.getOriginalFilename())
